@@ -1,0 +1,40 @@
+INitial setup of cluster
+
+https://cloud.google.com/sdk/?hl=ru
+
+gcloud components install alpha
+gcloud components install beta
+gcloud components install kubectl
+
+
+https://cloud.google.com/kubernetes-engine/release-notes
+
+# Initial setup:
+
+# 1 / 1024
+gcloud container clusters create "k8s-cluster"  --zone "europe-west1-d" \
+   --machine-type "custom-1-1024" --image-type "GCI" --disk-size "100" \
+   --network "default" --enable-cloud-logging \
+   --no-enable-cloud-monitoring --enable-autoscaling --min-nodes="2" --max-nodes="10" 
+
+
+# 2 / 2048
+gcloud container clusters create "k8s-cluster"  --zone "europe-west1-d" \
+   --machine-type "custom-2-2048" --image-type "GCI" --disk-size "100" \
+   --network "default" --enable-cloud-logging \
+   --no-enable-cloud-monitoring --enable-autoscaling --min-nodes="2" --max-nodes="10" 
+
+
+ kubectl create ns cdp
+ kubectl get ns
+ kubectl config view 
+
+ 1093  kubectl config set-context gke_endless-terra-264710_europe-west1-d_k8s-cluster --namespace=cdp
+ 1094  kubectl get ns
+
+########################################################################################################################
+#Delete cluster
+
+gcloud container clusters delete "k8s-cluster" --zone "europe-west1-d"
+
+

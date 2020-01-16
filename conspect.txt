@@ -1,0 +1,37 @@
+Config of cluster located /home/holms/.kube/config
+
+
+ 1079  kubectl get cluster
+ 1080  kubectl get nodes
+ 1081  kubectl get clusterrole
+ 1082  kubectl config view
+ 1083  kubectl get ns
+ 1084  kubectl create ns cdp
+ 1085  kubectl get ns
+ 1086  kubectl config view 
+ 1087  kubectl config get-clusters 
+ 1088  ll
+ 1089  kubectl config get-contexts 
+
+# Set namespace as default for user
+ 1093  kubectl config set-context gke_endless-terra-264710_europe-west1-d_k8s-cluster --namespace=cdp
+ 1094  kubectl get ns
+
+# Deployments
+ Deployments - declarative mechanism for update Pods and ReplicaSets
+
+# create deployment
+kubectl create deployment nginx --image=nginx
+
+#get 
+kubectl get deployments
+kubectl get deploy nginx
+kubectl get deploy nginx -o yaml
+# ReplicaSets
+kubectl get rs
+kubectl get pod
+kubectl get pod -o wide
+kubectl get pods --show-labels 
+
+#delete deployment
+kubectl delete deployments nginx
