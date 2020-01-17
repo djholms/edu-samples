@@ -1,6 +1,6 @@
-Создайте деплоймент для Jenkins
-1. Создать сикрет с паролем админа для Jenkins  В Jenkins  контейнере обьявите env переменную ADMIN_PASSWORD со значением из сикрета.
-2. Создать Configmap который будет содержать список плагинов для установки. Например:
++ Создайте деплоймент для Jenkins
++ 1. Создать сикрет с паролем админа для Jenkins  В Jenkins  контейнере обьявите env переменную ADMIN_PASSWORD со значением из сикрета.
++ 2. Создать Configmap который будет содержать список плагинов для установки. Например:
 
 kubernetes:1.18.1
 workflow-job:2.33
@@ -8,7 +8,8 @@ workflow-aggregator:2.6
 credentials-binding:1.19
 git:3.11.0
 
-3. Создать init container. В данный контейнер будет монтироватся файл со списком плагинов по пути /var/jenkins_config/plugins.txt . Данный initcontainer также будет шарить с основным контейнером волюм в который положит плагины.  Initcontainer должен запускать след команду:
++ 3. Создать init container. В данный контейнер будет монтироватся файл со списком плагинов по пути /var/jenkins_config/plugins.txt . 
+Данный initcontainer также будет шарить с основным контейнером волюм в который положит плагины.  Initcontainer должен запускать след команду:
 
     # Install missing plugins
     cp /var/jenkins_config/plugins.txt /var/jenkins_home;
@@ -31,7 +32,8 @@ git:3.11.0
       yes  | cp -i /var/jenkins_jobs/$job /var/jenkins_home/jobs/$job/config.xml
 
 
-6. Добавьте PersistentVolumeClaim к вашему Jenkins   чтобы в клауде запросился volume и примонтируйте его в /var/jenkins_home  Тем самым стейт вашего Jenkins будет храниться в клауде
+6. Добавьте PersistentVolumeClaim к вашему Jenkins   чтобы в клауде запросился volume и примонтируйте его в /var/jenkins_home  
+Тем самым стейт вашего Jenkins будет храниться в клауде
 7.  Ingress.   
 7.1 Сгенерируйте tls    сертификат для Jenkins и для  SonarQube (например jenkins.companydomain.com и sonar.maydomain.com) .  Положите их в сикреты. 
 7.2 Настройте ingress чтобы он по этим доменам редиректил вас на Jenkins и Sonarqube и tls брал из сикрета

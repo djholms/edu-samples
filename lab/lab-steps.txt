@@ -5,6 +5,7 @@
 
 kubectl create ns jenkins
 kubectl create -f jenkins-deployment.yaml
+kubectl apply -f jenkins-deployment.yaml
 kubectl get deployment
 kubectl  describe deployments
 
@@ -15,10 +16,10 @@ kubectl expose deployment jenkins-deployment --type=LoadBalancer
 
 # Step 1
 # create secret 
-kubectl create secret generic jenkins-admin-pass --from-file=./taks1/jenkins_secret.txt
+kubectl apply -f ./taks1/secret_jenkins.txt
 
 # Create configmap
-kubectl create configmap jenkins-pluggins --from-file=./taks1/pluggins.txt 
+kubectl create configmap jenkins-plugins --from-file=./taks1/plugins.txt 
 kubectl get configmaps
 kubectl describe configmaps jenkins-pluggins
 
