@@ -1,0 +1,16 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: jenkins-ingress
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /*
+        backend:
+          serviceName: jenkins
+          servicePort: 8080
+      # - path: /moreinfo/*
+      #   backend:
+      #     serviceName: http-svc
+      #     servicePort: 80

@@ -12,9 +12,11 @@ spec:
       labels:
         app: jenkins
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
       - name: jenkins
-        image: jenkins:2.60.3
+        image: jenkins/jenkins:lts
         # env:
         # - name: ADMIN_PASSWORD
         #   valueFrom:
@@ -26,24 +28,36 @@ spec:
             secretKeyRef: 
               name: jenkins.admin.pass
               key: password        
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /login
+            port: 8080
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /login
+            port: 8080
         ports:
         - containerPort: 8080
+        
         volumeMounts:        
         - name: shared-data
           mountPath: /var/jenkins_plugins
+        - name: jk-home  
+          mountPath: /var/jenkins_home
         - name: shared-pass
           mountPath: /var/jenkins_home/secrets          
 
       initContainers:
       - name: init-jenkins
-        image: jenkins:2.60.3
+        image: jenkins/jenkins:lts
         command: ['sh', '-c']
         args: 
         - cp /var/jenkins_config/plugins.txt /var/jenkins_home;
           rm -rf /usr/share/jenkins/ref/plugins/*.lock;
           /usr/local/bin/install-plugins.sh `echo $(cat /var/jenkins_home/plugins.txt)`;
-          yes n | cp -i /usr/share/jenkins/ref/plugins/* /var/jenkins_plugins/;
-          echo $ADMIN_PASSWORD > /var/jenkins_home/secrets/initialAdminPassword;
+          yes n | cp -i /usr/share/jenkins/ref/plugins/* /var/jenkins_plugins/;          
           echo $ADMIN_PASSWORD > /var/jenkins_home/secrets/initialAdminPassword_backup;
         env:
         - name: ADMIN_PASSWORD
@@ -54,6 +68,8 @@ spec:
         volumeMounts:
         - name: plugins
           mountPath: /var/jenkins_config
+        # - name: jk-home  
+        #   mountPath: /var/jenkins_home         
         - name: shared-data
           mountPath: /var/jenkins_plugins
         - name: shared-pass
@@ -67,3 +83,6 @@ spec:
           emptyDir: {}
         - name: shared-pass
           emptyDir: {}
+        - name: jk-home
+          persistentVolumeClaim:
+            claimName: pvc-data 
