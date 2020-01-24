@@ -1,6 +1,10 @@
 Step-by-Step implementation:
 
-#create cluster with nodes with 2CPU-2GB
+# Destroy cluster
+gcloud container clusters delete "k8s-cluster" --zone "europe-west1-d"
+
+
+# create cluster with nodes with 2CPU-2GB
 
 gcloud container clusters create "k8s-cluster"  --zone "europe-west1-d" \
    --machine-type "custom-2-2048" --image-type "GCI" --disk-size "100" \
@@ -19,7 +23,7 @@ kubectl create configmap jenkins-plugins --from-file=./taks1/plugins.txt
 
 # checking
 #    kubectl get configmaps
-#    kubectl describe configmaps jenkins-pluggins
+#    kubectl describe configmaps jenkins-plugins
 #
 
 # Create Jenkins deployment
@@ -28,8 +32,23 @@ kubectl apply -f ./taks1/deployment-jenkins.yaml
 # Create service
 kubectl apply -f ./taks1/service-jenkins.yaml
 
+# Create ingress
+kubectl apply -f ./taks1/ingress-jenkins.yaml
+
+===================================================================
+# Configure jenkins
+kubectl exec -it jenkins-deployment-  bash
+#get pass from 
+cat /var/jenkins_home/secrets/initialAdminPassword
+
+# set password
+J3nk1n$M@$t3rP@$$
+===================================================================
+
+
+
 # Create LoadBalancer as temp solution 
-kubectl expose deployment jenkins-deployment --type=LoadBalancer
+# kubectl expose deployment jenkins-deployment --type=LoadBalancer
 ===================================================================
 # create Jenkins
 

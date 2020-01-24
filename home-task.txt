@@ -36,7 +36,7 @@ git:3.11.0
 
 + 6. Добавьте PersistentVolumeClaim к вашему Jenkins   чтобы в клауде запросился volume и примонтируйте его в /var/jenkins_home  
     Тем самым стейт вашего Jenkins будет храниться в клауде
-7.  Ingress.   
++ 7.  Ingress.   
 7.1 Сгенерируйте tls    сертификат для Jenkins и для  SonarQube (например jenkins.companydomain.com и sonar.maydomain.com) .  Положите их в сикреты. 
 7.2 Настройте ingress чтобы он по этим доменам редиректил вас на Jenkins и Sonarqube и tls брал из сикрета
 7.3 Добавьте в себе в хосты jenkins.companydomain.com и sonar.maydomain.com и ip   адрес вашего ингресса. Проверьте что вы можете ходить через ингресс. 
