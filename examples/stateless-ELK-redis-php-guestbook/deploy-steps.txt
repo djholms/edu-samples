@@ -1,0 +1,16 @@
+https://kubernetes.io/docs/tutorials/stateless-application/guestbook-logs-metrics-with-elk/
+
+This should be deployed https://kubernetes.io/docs/tutorials/stateless-application/guestbook/
+
+# Install kube-state-metrics
+kubectl get pods --namespace=kube-system | grep kube-state
+
+
+git clone https://github.com/kubernetes/kube-state-metrics.git kube-state-metrics
+kubectl create -f examples/standard
+kubectl get pods --namespace=kube-system | grep kube-state-metrics
+
+Clone the Elastic examples GitHub repo
+cd examples/beats-k8s-send-anywhere
+
+

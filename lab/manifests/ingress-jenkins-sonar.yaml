@@ -1,0 +1,62 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: ci-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "kubernetes-ingress"
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  rules:
+  - host: jenkins.devops.co.ua
+    http:
+      paths:
+      - backend:
+          serviceName: jenkins
+          servicePort: 8080
+  - host: sonar.devops.co.ua
+    http:
+      paths:
+      - backend:
+          serviceName: sonarqube-sonarqube
+          servicePort: 9000
+
+
+
+      # - path: /moreinfo/*
+      #   backend:
+      #     serviceName: http-svc
+      #     servicePort: 80
+      
+      
+      # spec:
+      #   rules:
+      #   - host: first.bar.com
+      #     http:
+      #       paths:
+      #       - backend:
+      #           serviceName: service1
+      #           servicePort: 80
+      #   - host: second.foo.com
+      #     http:
+      #       paths:
+      #       - backend:
+      #           serviceName: service2
+      #           servicePort: 80      
+
+
+# spec:
+#   rules:
+#   - http:
+#       paths:
+#       - path: /*
+#         backend:
+#           serviceName: jenkins
+#           servicePort: 8080
+      # - path: /moreinfo/*
+      #   backend:
+      #     serviceName: http-svc
+      #     servicePort: 80      
+
+
+      kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/nginx-0.28.0/deploy/static/provider/cloud-generic.yaml

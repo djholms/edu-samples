@@ -20,8 +20,8 @@ git:3.11.0
 
 + Для init  контейнера используйте имедж Jenkins  т.к. в нем есть скрипт /usr/local/bin/install-plugins.sh
 
-4. Создайте 2 тестовые джобы (что будет в джобе не важно). Скопируйте xml  этих ждоб из /var/jenkins_home/jobs/$job/config.xml       
-и создайте конфигмапу которая будет содерать эти 2 джобы
++ 4. Создайте 2 тестовые джобы (что будет в джобе не важно). Скопируйте xml  этих ждоб из /var/jenkins_home/jobs/$job/config.xml       
++ и создайте конфигмапу которая будет содерать эти 2 джобы
 4.1 Создать деплоймент для SonarQube
 4.2 Возьмите пример https://github.com/SonarSource/sonar-scanning-examples/tree/master/sonarqube-scanner-maven 
 Можете напилить пайплайн который будет данный код билдить и прогонять сонар. Там все в readme  

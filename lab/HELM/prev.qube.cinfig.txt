@@ -1,0 +1,68 @@
+### Path to sonar "lab/sonarqube/"
+
+### PreConfiguration:
+gcloud auth configure-docker
+
+# Install the Application resource definition
+kubectl apply -f "https://raw.githubusercontent.com/GoogleCloudPlatform/marketplace-k8s-app-tools/master/crd/app-crd.yaml"
+
+### deployment
+# Configure the application with environment variables
+#Choose an instance name and namespace for the application
+export APP_INSTANCE_NAME=sonarqube-1
+export NAMESPACE=default
+
+# Configure the container image:
+export TAG=7.7
+export IMAGE_SONARQUBE="marketplace.gcr.io/google/sonarqube:$TAG"
+export IMAGE_POSTGRESQL="marketplace.gcr.io/google/sonarqube/postgresql:$TAG"
+export IMAGE_POSTGRESQL_EXPORTER="marketplace.gcr.io/google/sonarqube/postgresql-exporter:$TAG"
+export IMAGE_METRICS_EXPORTER="marketplace.gcr.io/google/sonarqube/prometheus-to-sd:$TAG"
+
+
+for i in "IMAGE_SONARQUBE" "IMAGE_POSTGRESQL" "IMAGE_POSTGRESQL_EXPORTER" "IMAGE_METRICS_EXPORTER"; do
+repo=$(echo ${!i} | cut -d: -f1);
+digest=$(docker pull ${!i} | sed -n -e 's/Digest: //p');
+export $i="$repo@$digest";
+env | grep $i;
+done
+
+# Generate random password for PostgreSQL:
+export POSTGRESQL_DB_PASSWORD=$(openssl rand 9 | openssl base64 -A | openssl base64)
+
+# Create TLS certificate for PostgreSQL (once)
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+    -keyout lab/certs/pg-tls.key \
+    -out lab/certs/pg-tls.crt \
+    -subj "/CN=postgresql/O=postgresql"
+
+# Set TLS_CERTIFICATE_KEY and TLS_CERTIFICATE_CRT variables:
+export TLS_CERTIFICATE_KEY="$(cat lab/certs/pg-tls.key | base64)"
+export TLS_CERTIFICATE_CRT="$(cat lab/certs/pg-tls.crt | base64)"
+
+
+# Expand the manifest template with helm template
+helm template chart/sonarqube \
+--name="$APP_INSTANCE_NAME" \
+--namespace="$NAMESPACE" \
+--set "sonarqube.image=$IMAGE_SONARQUBE" \
+--set "postgresql.image=$IMAGE_POSTGRESQL" \
+--set "postgresql.exporter.image=$IMAGE_POSTGRESQL_EXPORTER" \
+--set "postgresql.db.password=$POSTGRESQL_DB_PASSWORD" \
+--set "metrics.image=$METRICS_EXPORTER_ENABLED" \
+--set "tls.base64EncodedPrivateKey=$TLS_CERTIFICATE_KEY" \
+--set "tls.base64EncodedCertificate=$TLS_CERTIFICATE_CRT" \
+> ${APP_INSTANCE_NAME}_manifest.yaml
+
+
+helm template sonarqube-1 chart/sonarqube \
+--namespace="$NAMESPACE" \
+--set "sonarqube.image=$IMAGE_SONARQUBE" \
+--set "postgresql.image=$IMAGE_POSTGRESQL" \
+--set "postgresql.exporter.image=$IMAGE_POSTGRESQL_EXPORTER" \
+--set "postgresql.db.password=$POSTGRESQL_DB_PASSWORD" \
+--set "metrics.image=$METRICS_EXPORTER_ENABLED" \
+--set "tls.base64EncodedPrivateKey=$TLS_CERTIFICATE_KEY" \
+--set "tls.base64EncodedCertificate=$TLS_CERTIFICATE_CRT" \
+> ${APP_INSTANCE_NAME}_manifest.yaml
+

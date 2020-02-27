@@ -1,0 +1,35 @@
+https://kubernetes.io/docs/tutorials/stateless-application/guestbook/
+
+# Deploy Redis
+kubectl apply -f redis-master-deployment.yaml
+kubectl get pod
+kubectl logs -f redis-master
+
+# Creating the Redis Master Service
+kubectl apply -f redis-master-service.yaml 
+kubectl get svc
+
+# Creating the Redis Slave Deployment
+kubectl apply -f redis-slave-deployment.yaml
+kubectl get pod
+
+kubectl apply -f redis-slave-service.yaml
+kubectl get svc
+
+
+# Set up and Expose the Guestbook Frontend
+kubectl apply -f frontend-deployment.yaml
+kubectl get pod --watch
+kubectl get pods -l app=guestbook -l tier=frontend --watch
+
+kubectl apply -f frontend-service.yaml 
+kubectl get svc
+
+# Scale the frontend
+kubectl scale deployment frontend --replicas=5
+
+# Cleanup
+  kubectl delete deployment -l app=redis
+  kubectl delete service -l app=redis
+  kubectl delete deployment -l app=guestbook
+  kubectl delete service -l app=guestbook
