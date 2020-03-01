@@ -1,0 +1,32 @@
+kubectl create namespace lfs158
+mkdir rbac
+openssl genrsa -out student.key 2048
+openssl req -new -key student.key -out student.csr -subj "/CN=student/O=learner"
+
+# Insert into signing-reqest.yaml
+cat student.csr | base64 | tr -d '\n'
+
+kubectl create -f signing-request.yaml
+kubectl get csr
+kubectl certificate approve student-csr
+kubectl get csr
+
+kubectl get csr student-csr -o jsonpath='{.status.certificate}' | base64 --decode > student.crt
+cat student.crt
+
+kubectl config set-credentials student --client-certificate=student.crt --client-key=student.key
+
+kubectl config set-context student-context --cluster=minikube --namespace=lfs158 --user=student
+
+kubectl config view
+
+kubectl -n lfs158 create deployment nginx --image=nginx:alpine
+
+kubectl create -f role.yaml
+kubectl -n lfs158 get roles
+
+kubectl create -f rolebinding.yaml 
+kubectl -n lfs158 get rolebindings
+
+kubectl --context=student-context get pods
+
