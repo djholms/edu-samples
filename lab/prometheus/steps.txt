@@ -1,6 +1,10 @@
 TODO:
+create own exporter
+
+Access to prometheus by grafana via private network
 Authorization
 Volume for stdb
+
 
 gcloud container node-pools create high-cpu --cluster=k8s-cluster --zone "europe-west1-d" --machine-type=custom-2-3840 --disk-size=50 --num-nodes=1
 

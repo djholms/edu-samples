@@ -1,0 +1,52 @@
+---
+
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: test-app
+  namespace: prom-workshop
+spec:
+  replicas: 1
+  revisionHistoryLimit: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: test-app
+  template:
+    metadata:
+      name: test-app
+      labels:
+        app: test-app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8081"
+    spec:
+      containers:
+      - name: test-app
+        image: supergiantkir/prometheus-test-app
+        ports:
+        - name: web
+          containerPort: 8081
+        resources:
+          limits:
+            memory: "128Mi"
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    name: test-app
+  name: test-app
+  namespace: prom-workshop
+spec:
+  type: LoadBalancer
+  selector:
+    app: test-app
+  ports:
+  - name: test-app
+    protocol: TCP
+    port: 8081
+    targetPort: web
