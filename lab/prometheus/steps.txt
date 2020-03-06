@@ -1,0 +1,28 @@
+TODO:
+Authorization
+Volume for stdb
+
+gcloud container node-pools create high-cpu --cluster=k8s-cluster --zone "europe-west1-d" --machine-type=custom-2-3840 --disk-size=50 --num-nodes=1
+
+### Commands:
+
+kubectl apply -f 1-namespace.yaml
+kubectl apply -f 2-prometheus.yaml
+kubectl apply -f 3-grafana.yaml
+kubectl apply -f 4-http-simulator.yaml 
+34.76.239.9:8080/metrics
+kubectl apply -f 5-alertmanager.yaml 
+
+kubectl get pod -n prom-workshop
+kubectl get svc -n prom-workshop
+
+kubectl edit configmap prometheus-rules -n prom-workshop
+
+- alert: ErrorRateHigh
+  expr: sum(rate(http_requests_total{app="http-simulator", status="500"}[5m])) / sum(rate(http_requests_total{app="http-simulator"}[5m])) > 0.02
+  for: 1m
+  labels:
+    severity: major
+
+curl -X POST http://35.187.34.187:9090/-/reload    
+
