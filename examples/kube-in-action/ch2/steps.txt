@@ -1,0 +1,14 @@
+docker build -t kubia .
+
+podman run --name kubia-container -p 8080:8080 -d kubia
+
+podman tag kubia djholms/kubia
+
+kubectl run kubia --image=djholms/kubia --port=8080 --generator=run-pod/v1
+
+kubectl expose rc kubia --type=LoadBalancer --name kubia-http
+
+kubectl get rc
+kubectl scale rc kubia --replicas=3
+
+kubectl get pods -o wide

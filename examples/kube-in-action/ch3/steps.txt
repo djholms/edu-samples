@@ -1,0 +1,51 @@
+kubectl get pod kubia-xxxxx -o yaml
+kubectl create -f kubia-manual.yaml
+kubectl get po kubia-manual -o yaml
+
+kubectl logs kubia-manual
+# Specify container inside pod
+kubectl logs kubia-manual -c kubia
+
+# Forward the port
+kubectl port-forward kubia-manual 8888:8080
+
+
+kubectl create -f kubia-manual-with-labels.yaml
+kubectl get po --show-labels
+kubectl get po -L creation_method,env
+
+kubectl label po kubia-manual creation_method=manual
+kubectl label po kubia-manual-v2 env=debug --overwrite
+
+# Listing pods using a label selector
+kubectl get po -l creation_method=manual
+kubectl get po -L creation_method,env -l env
+kubectl get po -L creation_method,env -l '!env'
+
+# Add label to node
+kubectl label node gke-k8s-cluster-default-pool-cc46f06f-k7lj gpu=true
+kubectl get nodes -l gpu=true
+
+
+#Namespaces
+kubectl get ns
+kubectl get po --namespace kube-system
+
+kubectl apply -f custom-namespace.yaml
+kubectl create -f kubia-manual.yaml -n custom-namespace
+
+To quickly switch to a different namespace, you can set up the following
+alias: alias kcd='kubectl config set-context $(kubectl config current-
+context) --namespace ' . You can then switch between namespaces using kcd
+some-namespace .
+
+
+# Stopping and removing pods
+kubectl delete po kubia-gpu
+kubectl delete po -l creation_method=manual
+kubectl delete ns custom-namespace
+# Delete all pods in ns
+kubectl delete po --all
+
+#Deleting (almost) all resources in a namespace
+
