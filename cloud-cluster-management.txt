@@ -1,0 +1,43 @@
+##################################################################################################################################
+###  GCP  ########################################################################################################################
+##################################################################################################################################
+# Step 0: Setup and destroy cluster
+
+#Enable docker auth
+gcloud auth configure-docker
+
+# Destroy cluster
+gcloud container clusters delete "k8s-cluster" --zone "europe-west1-d"
+
+
+#Create BASIC cluster - 1 core / 1500M from 1 to 10 nodes
+
+gcloud container clusters create "k8s-cluster"  --zone "europe-west1-d" \
+   --machine-type "custom-1-1536" --image-type "GCI" --disk-size "50" \
+   --network "default" --enable-cloud-logging \
+   --no-enable-cloud-monitoring --enable-autoscaling --min-nodes="2" --max-nodes="10"
+
+# Extend cluster with more powerfull nodes
+
+# 2 core / 4GB
+gcloud container node-pools create high-mem --cluster=k8s-cluster --zone "europe-west1-d" --machine-type=custom-2-4096 --disk-size=50 --num-nodes=1
+#gcloud container node-pools create high-mem --cluster=k8s-cluster --zone "europe-west1-d" --machine-type=custom-2-4096 --disk-size=50 --min-nodes="1" --max-nodes="2"
+# 4 core / 2GB
+gcloud container node-pools create high-cpu --cluster=k8s-cluster --zone "europe-west1-d" --machine-type=custom-4-2048 --disk-size=50 --num-nodes=1
+
+# Get cluster info
+gcloud container node-pools list --cluster="k8s-cluster" --zone "europe-west1-d"
+
+kubectl  get node  | nl
+
+
+# Destroy more powerfull nodes
+gcloud container node-pools delete high-mem --cluster=k8s-cluster --zone "europe-west1-d"
+gcloud container node-pools delete high-cpu --cluster=k8s-cluster --zone "europe-west1-d"
+##################################################################################################################################
+
+# Get static IP addresses
+gcloud compute addresses list
+
+# create static IP for ingress
+gcloud compute addresses create kubernetes-ingress --global
