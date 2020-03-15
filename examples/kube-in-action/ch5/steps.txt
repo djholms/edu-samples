@@ -1,0 +1,40 @@
+kubectl apply -f kubia.yaml 
+kubectl apply -f kubia-svc.yaml 
+
+kubectl get svc
+kubectl get ep
+kubectl exec kubia-wjbqm -- curl -s http://10.11.253.209
+
+kubectl apply -f kubia-svc-nodeport.yaml 
+kubectl get svc kubia-nodeport
+
+kubectl delete po --all
+
+
+gcloud compute firewall-rules create kubia-svc-rule --allow=tcp:30123
+kubectl get nodes -o jsonpath='{.items[*].status.addresses[?(@.type=="ExternalIP")].address}'
+curl http://34.76.71.40:30123
+
+
+kubectl apply -f kubia-svc-loadbalancer.yaml
+kubectl get svc
+curl 34.76.93.195
+
+kubectl apply -f kubia-ingress.yaml 
+kubectl get ingresses.
+# add ip to /etc/hosts
+curl http://kubia.example.com
+
+
+# Configuring SSL
+openssl genrsa -out tls.key 2048
+openssl req -new -x509 -key tls.key -out tls.cert -days 360 -subj /CN=kubia.example.com
+
+kubectl create secret tls tls-secret --cert=tls.cert --key=tls.key
+kubectl apply -f kubia-ingress-tls.yaml 
+
+
+
+
+
+
