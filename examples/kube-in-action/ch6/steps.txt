@@ -1,0 +1,55 @@
+podman build -t djholms/fortune .
+podman push djholms/fortune
+
+kubectl apply -f fortune-pod.yaml
+kubectl port-forward fortune 8080:80
+curl http://localhost:8080
+
+# Using persistent storage
+
+# GCE and mongodb
+gcloud container clusters list
+gcloud compute disks create --size=1GiB --zone=europe-west1-d mongodb
+
+kubectl apply -f mongodb-pod-gcepd.yaml 
+
+# configuring mongo 
+kubectl exec -it mongodb mongo
+use mystore
+db.foo.insert({name:'foo'})
+db.foo.insert({name:'bar'})
+db.foo.find()
+
+kubectl delete pod mongodb
+kubectl apply -f mongodb-pod-gcepd.yaml 
+
+kubectl exec -it mongodb mongo
+use mystore
+db.foo.find()
+
+
+# PV and PVC
+kubectl apply -f mongodb-pv-gcepd.yaml 
+kubectl get pv
+kubectl apply -f mongodb-pvc.yaml
+kubectl get pvc
+
+kubectl apply -f mongodb-pod-pvc.yaml 
+kubectl exec -it mongodb mongo
+use mystore
+db.foo.find()
+
+kubectl delete pod mongodb
+kubectl delete pvc mongodb-pvc
+kubectl delete pv mongodb-pv
+
+gcloud compute disks delete --zone=europe-west1-d mongodb
+
+
+kubectl apply -f storageclass-fast-gcepd.yaml 
+kubectl apply -f mongodb-pvc-dp.yaml 
+
+gcloud compute disks list
+kubectl get sc
+kubectl get sc standard -o yaml
+
