@@ -1,0 +1,52 @@
+podman build -t djholms/fortune:args .
+podman push djholms/fortune:args
+podman run -it docker.io/djholms/fortune:argspodman run -it docker.io/djholms/fortune:args
+
+kubectl apply -f fortune-pod-args.yaml
+
+podman build -t djholms/fortune:env .
+podman push djholms/fortune:env
+
+
+kubectl create configmap fortune-config --from-literal=sleep-interval=25
+kubectl get configmap fortune-config -o yaml
+kubectl apply -f fortune-pod-env-configmap.yaml
+
+kubectl delete cm fortune-config 
+kubectl create configmap fortune-config --from-file=configmap-files
+kubectl apply -f fortune-pod-configmap-volume.yaml
+
+kubectl port-forward fortune-configmap-volume 8080:80 &
+curl -H "Accept-Encoding: gzip" -I localhost:8080
+kubectl exec fortune-configmap-volume -c web-server ls /etc/nginx/conf.d
+
+
+kubectl edit configmap fortune-config
+# change the gzip on line to gzip off
+kubectl exec fortune-configmap-volume -c web-server cat /etc/nginx/conf.d/my-nginx-config.conf
+kubectl exec fortune-configmap-volume -c web-server -- nginx -s reload
+curl -H "Accept-Encoding: gzip" -I localhost:8080
+
+kubectl exec -it fortune-configmap-volume -c web-server -- ls -lA /etc/nginx/conf.d
+
+
+kubectl get secrets 
+kubectl exec fortune-configmap-volume ls /var/run/secrets/kubernetes.io/serviceaccount/
+
+openssl genrsa -out https.key 2048
+openssl req -new -x509 -key https.key -out https.cert -days 3650 -subj /CN=www.kubia-example.com
+echo bar > foo
+kubectl create secret generic fortune-https --from-file=https.key --from-file=https.cert --from-file=foo
+
+kubectl get secret fortune-https -o yaml
+kubectl get configmap fortune-config -o yaml
+
+kubectl edit configmap fortune-config
+
+kubectl create configmap fortune-config --from-file=configmap-files
+
+kubectl port-forward fortune-https 8443:443 &
+curl https://localhost:8443 -k
+
+kubectl exec fortune-https -c web-server -- mount | grep certs
+
