@@ -1,0 +1,19 @@
+kubectl cluster-info
+kubectl proxy
+curl localhost:8001
+curl http://localhost:8001/apis/batch
+curl http://localhost:8001/apis/batch/v1
+
+
+kubectl apply -f curl.yaml
+kubectl exec -it curl bash
+env | grep KUBERNETES_SERVICE
+
+kubectl get svc
+
+
+
+
+
+
+kubectl delete po --all
