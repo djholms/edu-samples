@@ -1,0 +1,8 @@
+docker build -t djholms/java-app .
+podman run djholms/java-app
+podman push djholms/java-app
+
+
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm install my-tomcat-app --set image.repository=djholms/java-app --set image.tag=latest --set image.pullPolicy=Always bitnami/tomcat
+
