@@ -1,0 +1,108 @@
+
+
+
+cat <<EOF > /etc/prometheus/rules_alert.yml
+groups:
+- name: PrometheusGroup
+  rules:
+  - alert: PrometheusConfigurationReload
+    expr: prometheus_config_last_reload_successful != 1
+    for: 1m
+    labels:
+      severity: critical
+      service: prom
+    annotations:
+      summary: "Prometheus configuration reload (instance {{ \$labels.instance }})"
+      description: "Prometheus configuration reload error\n VALUE = {{ \$value }}\n LABELS: {{ \$labels }}"
+
+- name: NodeExporterGroup
+  rules:
+  - alert: ExporterDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: error
+      service: prom
+    annotations:
+      summary: "Exporter down (instance {{ \$labels.instance }})"
+      description: "Prometheus exporter down\n VALUE = {{ \$value }}\n LABELS: {{ \$labels }}"
+
+  - alert: HighCpuLoad
+    expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "High CPU load (instance {{ \$labels.instance }})"
+      description: "CPU load is > 80%\n VALUE = {{ \$value }}\n LABELS: {{ \$labels }}"
+
+  - alert: SystemdServiceCrashed
+    expr: node_systemd_unit_state{state="failed"} == 1
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "SystemD service crashed (instance {{ \$labels.instance }})"
+      description: "SystemD service crashed\n VALUE = {{ \$value }}\n LABELS: {{ \$labels }}"
+EOF
+
+
+/usr/local/bin/promtool check rules /etc/prometheus/rules_alert.yml
+/usr/local/bin/promtool check rules /etc/prometheus/prometheus.yml
+
+
+adduser --comment "User to run Alertmanager" --shell /bin/false alertmanager
+
+cd /tmp
+wget https://github.com/prometheus/alertmanager/releases/download/v0.19.0/alertmanager-0.19.0.linux-amd64.tar.gz
+tar xvfz alertmanager-0.19.0.linux-amd64.tar.gz
+cd alertmanager-0.19.0.linux-amd64
+mv alertmanager /usr/local/bin/
+mkdir /etc/alertmanager
+cp alertmanager.yml /etc/alertmanager/alertmanager.yml
+chown devops:alertmanager -R /etc/alertmanager
+
+mkdir /var/lib/alertmanager/
+chown alertmanager:alertmanager /var/lib/alertmanager/
+
+cat <<EOF > /etc/sysconfig/alertmanager
+OPTIONS="--config.file=/etc/alertmanager/alertmanager.yml \
+      --storage.path=/var/lib/alertmanager/"
+EOF
+
+
+cat <<EOF > /usr/lib/systemd/system/alertmanager.service
+[Unit]
+Description=Prometheus Alertmanager
+Documentation=https://github.com/alertmanager/alertmanager
+[Service]
+User=alertmanager
+Group=alertmanager
+Restart=always
+EnvironmentFile=/etc/sysconfig/alertmanager
+ExecStart=/usr/local/bin/alertmanager \$OPTIONS
+ExecReload=/bin/kill -HUP \$MAINPID
+TimeoutStopSec=20s
+SendSIGKILL=no
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reloadsystemctl 
+systemctl start alertmanager.service
+systemctl enable alertmanager.service
+
+curl -LI -XGET http://localhost:9093
+
+9. Добавляем отправку alert из Prometheus в Alertmanager.
+Для этого добавим targets в конфигурационный файл Prometheus:
+/etc/prometheus/prometheus.yml. Обратите внимание: секция alerting уже имеется в
+конфигурационном файле. Необходимо ее привести к виду:
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - 'localhost:9093'
+
+systemctl reload prometheus.service
+

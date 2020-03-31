@@ -1,0 +1,66 @@
+Установка Node Exporter
+
+!!! Disable SeLinux
+
+cd /tmp
+wget https://github.com/prometheus/node_exporter/releases/download/v0.18.1/node_exporter-0.18.1.linux-amd64.tar.gz
+tar xvfz node_exporter-0.18.1.linux-amd64.tar.gz
+cd node_exporter-0.18.1.linux-amd64
+sudo mv node_exporter /usr/local/bin/
+
+
+2. Создадим файл со списком ключей для запуска Node Expoerter.
+Для того, чтобы каждый раз не перечитывать настройки systemd, список ключей
+вынесен в файл: /etc/sysconfig/node_exporter.
+sudo cat <<EOF > /etc/sysconfig/node_exporter
+OPTIONS=""
+EOF
+
+
+3. Создаем systemd сервис.
+cat <<EOF > /usr/lib/systemd/system/node_exporter.service
+[Unit]
+Description=Prometheus Node exporter for machine metrics
+Documentation=https://github.com/prometheus/node_exporter
+[Service]
+#Restart=always
+User=root
+EnvironmentFile=/etc/sysconfig/node_exporter
+ExecStart=/usr/local/bin/node_exporter $OPTIONS
+#ExecReload=/bin/kill -HUP $MAINPID
+#TimeoutStopSec=20s
+#SendSIGKILL=no
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+4. Обновляем список служб systemd, запускаем Node exporter и добавляем в автозапуск.
+sudo systemctl daemon-reload
+sudo systemctl start node_exporter
+sudo systemctl enable node_exporter
+
+
+5. Проверяем работу.
+По ​ умолчанию​ , Node Exporter слушает порт ​ 9100.
+curl -I http://localhost:9100
+
+
+Добавление метрик из файла
+1. Создадим файл, который будет содержать метрики.
+
+mkdir /tmp/node_exporter/
+cat <<EOF > /tmp/node_exporter/node_exporter_custom_metric.prom
+#TYPE slurm_demo_metric counter
+slurm_demo_metric 100
+EOF
+
+cat <<EOF > /etc/sysconfig/node_exporter
+OPTIONS="--collector.textfile.directory=/tmp/node_exporter"
+EOF
+
+systemctl restart node_exporter
+
+curl -si http://localhost:9100/metrics | grep slurm
+
+

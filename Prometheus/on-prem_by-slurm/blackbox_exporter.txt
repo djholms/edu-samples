@@ -1,0 +1,132 @@
+
+
+cd /tmp
+wget https://github.com/prometheus/blackbox_exporter/releases/download/v0.15.1/blackbox_exporter-0.15.1.linux-amd64.tar.gz
+tar xvfz blackbox_exporter-0.15.1.linux-amd64.tar.gz
+cd blackbox_exporter-0.15.1.linux-amd64
+mv blackbox_exporter /usr/local/bin/
+mkdir /etc/blackbox_exporter
+cp blackbox.yml /etc/blackbox_exporter/
+
+
+cat <<EOF > /etc/sysconfig/blackbox_exporter
+OPTIONS="--config.file=/etc/blackbox_exporter/blackbox.yml"
+EOF
+
+
+
+systemctl daemon-reload
+systemctl start blackbox_exporter
+systemctl enable blackbox_exporter
+
+
+cat <<EOF > /usr/lib/systemd/system/blackbox_exporter.service
+[Unit]
+Description=Prometheus exporter for machine metrics
+Documentation=https://github.com/prometheus/blackbox_exporter
+[Service]
+Restart=always
+User=root
+ExecStart=/usr/local/bin/blackbox_exporter \
+  --config.file=/etc/blackbox_exporter/blackbox.yml \
+  --web.listen-address=":9115"
+ExecReload=/bin/kill -HUP $MAINPID
+TimeoutStopSec=20s
+SendSIGKILL=no
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+################################################################################
+Настройка проб
+/etc/blackbox_exporter/blackbox.yml
+
+cat <<EOF >> /etc/blackbox_exporter/blackbox.yml
+  icmp_slurm:
+    prober: icmp
+    timeout: 2s
+    icmp:
+      preferred_ip_protocol: ip4
+
+EOF
+
+systemctl restart blackbox_exporter
+curl -is "http://localhost:9115/probe?module=icmp_slurm&target=slurm.io" | grep probe_success
+
+
+cat <<EOF >> /etc/blackbox_exporter/blackbox.yml
+  dns_slurm:
+    prober: dns
+    timeout: 2s
+    dns:
+      query_name: slurm.io
+      preferred_ip_protocol: ip4
+
+  dns_devops_cloud:
+    prober: dns
+    timeout: 2s
+    dns:
+      query_name: cloud.devops.co.ua
+      preferred_ip_protocol: ip4   
+
+EOF
+
+systemctl restart blackbox_exporter
+curl -is "http://localhost:9115/probe?module=dns_slurm&target=8.8.8.8" | grep probe_success
+curl -is "http://localhost:9115/probe?module=dns_devops_cloud&target=8.8.8.8" | grep probe_success
+
+
+cat <<EOF >> /etc/blackbox_exporter/blackbox.yml
+  tcp_slurm:
+    prober: tcp
+    timeout: 2s
+    tcp:
+      query_response:
+        - expect: "^SSH-2.0-"
+      preferred_ip_protocol: ip4
+
+EOF
+
+systemctl restart blackbox_exporter
+curl -is "http://localhost:9115/probe?module=tcp_slurm&target=127.0.0.1:22" | grep probe_success
+
+
+
+cat <<EOF >> /etc/blackbox_exporter/blackbox.yml
+  http_slurm:
+    prober: http
+    timeout: 2s
+    http:
+      preferred_ip_protocol: ip4
+      valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+      valid_status_codes: [200]
+      fail_if_not_ssl: true
+      method: GET
+      fail_if_body_not_matches_regexp:
+        - "Prometheus"
+
+  http_devops_cloud:
+    prober: http
+    timeout: 2s
+    http:
+      preferred_ip_protocol: ip4
+      valid_http_versions: ["HTTP/1.1", "HTTP/2"]
+      valid_status_codes: [200]
+      fail_if_not_ssl: true
+      method: GET
+      fail_if_body_not_matches_regexp:
+        - "cloud"
+  
+EOF
+
+systemctl restart blackbox_exporter
+curl -is "http://localhost:9115/probe?module=http_slurm&target=http://prometheus.io" | grep probe_success
+curl -is "http://localhost:9115/probe?module=http_devops_cloud&target=http://cloud.devops.co.ua" | grep probe_success
+
+
+
+
+
+
+

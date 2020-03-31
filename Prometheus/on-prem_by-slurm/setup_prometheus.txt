@@ -1,0 +1,182 @@
+#### Promethues setup
+## Helpful article   https://devconnected.com/how-to-setup-grafana-and-prometheus-on-linux/
+
+sudo useradd prometheus --comment "Prometheus server user" --shell /bin/false
+
+$ cd Prometheus/prometheus-2.11.2.linux-amd64/ 
+$ sudo cp prometheus promtool /usr/local/bin
+
+sudo chown prometheus:prometheus /usr/local/bin/prometheus
+
+sudo mkdir /etc/prometheus
+sudo cp -R consoles/ console_libraries/ prometheus.yml /etc/prometheus
+
+sudo mkdir -p /var/lib/prometheus
+sudo chown -R prometheus:prometheus /var/lib/prometheus /etc/prometheus/*
+
+
+
+
+cat <<EOF > /usr/lib/systemd/system/prometheus.service
+[Unit]
+Description=Prometheus Server
+Documentation=https://github.com/prometheus/prometheus
+Wants=network-online.target
+After=network-online.target
+[Service]
+Restart=always
+User=prometheus
+Group=prometheus
+EnvironmentFile=/etc/sysconfig/prometheus
+ExecStart=/usr/local/bin/prometheus \$OPTIONS
+ExecReload=/bin/kill -HUP \$MAINPID
+TimeoutStopSec=20s
+SendSIGKILL=no
+[Install]
+WantedBy=multi-user.target
+EOF
+
+
+
+cat <<EOF > /etc/sysconfig/prometheus
+OPTIONS="--config.file=/etc/prometheus/prometheus.yml \
+         --storage.tsdb.path=/var/lib/prometheus \
+         --web.console.templates=/etc/prometheus/consoles \
+         --web.console.libraries=/etc/prometheus/console_libraries \
+         --web.listen-address=0.0.0.0:9090 \
+         --web.enable-admin-api"
+EOF
+
+systemctl daemon-reload
+systemctl start prometheus
+systemctl enable prometheus
+
+
+
+============================================
+slurm version
+
+########################################################################################
+###  Service Discovery
+########################################################################################
+
+# Static:
+
+cat <<EOF >> /etc/prometheus/prometheus.yml
+  - job_name: 'static_config'
+    static_configs:
+    - targets:
+      - localhost:9100
+      - 192.168.200.28:9100
+      labels:
+        sd: static
+
+EOF
+
+###  Service Discovery
+mkdir /etc/prometheus/sd
+chown devops:prometheus /etc/prometheus/sd
+
+
+cat <<EOF > /etc/prometheus/sd/node_exporter.yml
+- targets:
+  - localhost:9100
+  - 192.168.200.14:9100
+  - 192.168.200.28:9100
+
+  labels:
+    sd: file
+
+EOF
+
+
+cat <<EOF >> /etc/prometheus/prometheus.yml
+  - job_name: 'file_sd'
+    file_sd_configs:
+      - files:
+        - /etc/prometheus/sd/*.yml
+        refresh_interval: 1m
+
+EOF
+
+cat <<EOF >> /etc/prometheus/prometheus.yml
+  - job_name: pushgateway
+    honor_labels: true
+    static_configs:
+    - targets:
+      - 192.168.200.23:9091
+EOF
+
+systemctl reload prometheus.service
+
+
+systemctl daemon-reload
+systemctl start prometheus
+systemctl enable prometheus
+
+
+########################################################################################
+###  Pushgateway
+########################################################################################
+
+useradd pushgateway --comment "Pushgateway server user" --shell /bin/false
+
+cd /tmp
+wget https://github.com/prometheus/pushgateway/releases/download/v1.0.0/pushgateway-1.0.0.linux-amd64.tar.gz
+tar xvfz pushgateway-1.0.0.linux-amd64.tar.gz
+cd pushgateway-1.0.0.linux-amd64
+mv pushgateway /usr/local/bin/
+
+cat <<EOF > /etc/sysconfig/pushgateway
+OPTIONS="--web.listen-address=:9091 \
+        --web.telemetry-path=/metrics \
+        --persistence.file=/tmp/metric.store \
+        --persistence.interval=5m \
+        --log.level=info \
+        --log.format=json"
+EOF
+
+
+cat <<EOF > /usr/lib/systemd/system/pushgateway.service
+[Unit]
+Description=Prometheus Pushgateway
+Documentation=https://github.com/prometheus/pushgateway
+[Service]
+User=pushgateway
+Group=pushgateway
+EnvironmentFile=/etc/sysconfig/pushgateway
+Restart=always
+ExecStart=/usr/local/bin/pushgateway \$OPTIONS
+ExecReload=/bin/kill -HUP \$MAINPID
+TimeoutStopSec=20s
+SendSIGKILL=no
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl daemon-reload
+systemctl start pushgateway
+systemctl enable pushgateway
+
+curl -XGET -IL http://localhost:9091
+
+# add PushGateway
+firewall-cmd --permanent --zone=public --add-port=9091/tcp
+firewall-cmd --reload
+
+
+cat <<EOF | curl --data-binary @- http://127.0.0.1:9091/metrics/job/slurm_io_test_job/instance/monitoring.s01.slurm.io
+# TYPE slurm_io_edu_counter counter
+slurm_io_edu_counter{type="counter"} 42
+# TYPE slurm_io_gauge gauge
+slurm_io_gauge 2398.283
+EOF
+
+curl -L http://localhost:9091/metrics/
+
+
+
+
+
+
+
