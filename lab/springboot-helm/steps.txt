@@ -4,3 +4,5 @@ docker run -dit --name backend --network msvc-network msvc-backend:1.0.0
 
 docker image build . -t msvc-gateway:1.0.0
 docker run -dit -p 80:8080 --env secret=my-real-secret --env BACKEND_URL=http://backend:8080/ --name gateway --network msvc-network msvc-gateway:1.0.0
+
+kubectl config set-context --current --namespace=msvc-ns
