@@ -1,0 +1,52 @@
+podman build -t kubia .
+podman tag kubia djholms/kubia:2 djholms/kubia:latest
+podman push kubia djholms/kubia:2
+podman push kubia djholms/kubia:latest
+
+kubectl apply -f kubia-liveness-probe.yaml
+
+# Get logs
+kubectl logs kubia-liveness --previous
+
+# Apply RC
+kubectl apply -f kubia-rc.yaml
+kubectl get rc
+
+kubectl describe rc kubia
+kubectl label pod kubia-bj7ct type=special
+kubectl get pod --show-labels 
+kubectl label pod kubia-bj7ct app=foo --overwrite
+kubectl get pods -L app
+
+kubectl scale rc kubia --replicas=10
+kubectl delete rc kubia
+
+# ReplicaSet
+kubectl apply -f kubia-rs.yaml 
+kubectl get rs
+kubectl apply -f kubia-replicaset-matchexpressions.yaml
+
+
+# DaemonSet
+podman build -t ssd-monitor .
+podman tag ssd-monitor djholms/ssd-monitor:1 djholms/ssd-monitor:latest
+podman push ssd-monitor djholms/ssd-monitor:1
+podman push ssd-monitor djholms/ssd-monitor:latest
+
+kubectl create -f ssd-monitor-daemonset.yaml
+kubectl get ds
+
+
+
+podman build -t batch-job .
+podman tag batch-job djholms/batch-job:1 djholms/batch-job:latest
+podman push batch-job djholms/batch-job:1
+podman push batch-job djholms/batch-job:latest
+
+kubectl apply -f exporter.yaml 
+kubectl get job
+kubectl get pod
+kubectl logs batch-job-xxx
+
+kubectl apply -f multi-completion-batch-job.yaml 
+multi-completion-batch-job

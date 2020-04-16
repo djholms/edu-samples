@@ -1,0 +1,58 @@
+podman build -t djholms/kubia:v1 .
+podman push djholms/kubia:v1
+
+podman build -t djholms/kubia:v2 .
+podman push djholms/kubia:v2
+
+podman build -t djholms/kubia:v3 .
+podman push djholms/kubia:v3
+
+podman build -t djholms/kubia:v4 .
+podman push djholms/kubia:v4
+podman push djholms/kubia:v4 djholms/kubia:latest
+
+
+
+kubectl apply -f kubia-rc-and-service-v1.yaml
+kubectl get svc kubia
+
+while true; do curl http://34.77.144.110; done
+
+# Performing a rolling update with kubectl
+kubectl rolling-update kubia-v1 kubia-v2 --image=luksa/kubia:v2
+
+kubectl describe rc kubia-v2
+kubectl get po --show-labels
+
+kubectl delete rc --all
+kubectl create -f kubia-deployment-v1.yaml --record
+kubectl rollout status deployment kubia
+
+kubectl get po
+kubectl get replicasets
+kubectl patch deployment kubia -p '{"spec": {"minReadySeconds": 10}}'
+
+while true; do curl http://34.77.144.110; done
+kubectl set image deployment kubia nodejs=djholms/kubia:v2
+kubectl rollout status deployment kubia
+
+kubectl set image deployment kubia nodejs=djholms/kubia:v3
+kubectl rollout status deployment kubia
+
+kubectl rollout undo deployment kubia
+
+kubectl rollout history deployment kubia
+kubectl rollout undo deployment kubia --to-revision=1
+
+
+kubectl set image deployment kubia nodejs=djholms/kubia:v4
+kubectl rollout pause deployment kubia
+kubectl rollout resume deployment kubia
+
+kubectl set image deployment kubia nodejs=djholms/kubia:v2
+
+kubectl apply -f kubia-deployment-v3-with-readinesscheck.yaml
+kubectl rollout status deployment kubia
+
+while true; do curl http://34.77.144.110; done
+kubectl rollout undo deployment kubia
