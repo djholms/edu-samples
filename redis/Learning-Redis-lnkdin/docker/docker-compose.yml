@@ -1,0 +1,59 @@
+version: '3.8'
+services:
+  # mongodb_container:
+  #   image: mongo:latest
+  #   environment:
+  #     # MONGO_INITDB_ROOT_USERNAME: root
+  #     # MONGO_INITDB_ROOT_PASSWORD: rootpassword
+  #   ports:
+  #     - 27017:27017
+  #   volumes:
+  #     - mongodb_data:/var/projects/database
+
+  redis_master:
+    image: "redis"
+    container_name: redis_master
+    environment:
+      - REDIS_REPLICATION_MODE=master    
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL  
+    ports:
+     - "6379:6379"
+    # configs:
+    #   - source: redis.conf
+    #     target: /usr/local/etc/redis/redis.conf
+    volumes:
+      - "redis1_data:/data"
+      - "$PWD/redis_1.conf:/usr/local/etc/redis/redis.conf"
+    
+    # command: ["/usr/local/bin/redis-server"]  
+    command: ["/usr/local/bin/redis-server", "/usr/local/etc/redis/redis.conf"]  
+
+
+  redis_slave:
+    image: "redis"
+    container_name: redis_slave
+    environment:
+      - REDIS_REPLICATION_MODE=slave
+      - REDIS_MASTER_HOST=redis_master
+      - REDIS_MASTER_PORT_NUMBER=6379
+      # - REDIS_MASTER_PASSWORD=my_password
+      # - REDIS_PASSWORD=my_password
+      - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL  
+    depends_on:
+      - redis_master
+    ports:
+     - "6380:6380"
+    volumes:
+      - "redis2_data:/data"
+      - "$PWD/redis_2.conf:/usr/local/etc/redis/redis.conf"
+    
+    command: ["/usr/local/bin/redis-server", "/usr/local/etc/redis/redis.conf"]  
+    # command: redis-server --slaveof redis_master 6379
+# # configs:
+# #   redis.conf:
+# #     file: ./redis.conf
+
+volumes:
+  # mongodb_data:
+  redis1_data:
+  redis2_data:  

@@ -1,0 +1,18 @@
+https://hub.docker.com/_/redis
+
+mkdir -p /var/projects/redis/{etc,data}
+mkdir /var/projects/redis/data/{bases,log}
+
+cd /home/devops/projects/edu-samples/redis/Learning-Redis-lnkdin/docker
+docker run --restart=always -d --name redis_1 \
+   -v redis.conf:/usr/local/etc/redis/redis.conf \
+   -v /var/projects/redis/data:/data \
+   -p 127.0.0.1:6379:6379 redis redis-server /usr/local/etc/redis/redis.conf
+
+
+docker run -d --rm \
+-v redis.conf:/usr/local/etc/redis/redis.conf \
+--name myredis redis redis-server /usr/local/etc/redis/redis.conf
+
+docker exec -it redis_1 redis-cli 
+docker exec -it myredis redis-cli 
