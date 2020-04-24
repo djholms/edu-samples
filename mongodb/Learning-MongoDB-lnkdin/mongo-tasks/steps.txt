@@ -1,0 +1,180 @@
+=======================================================================================
+Unit 2
+ch 1
+
+for (i=0; i<10000; i++) {
+  db.numbers.insert(
+    {"number":i}
+  )
+}
+
+db.numbers.count()
+db.numbers.find({"number":1}).explain("executionStats")
+db.numbers.createIndex({"number":1})
+
+ch2
+
+docker exec -it docker_mongodb_container_1 bash
+mongoimport --db learning_mongo --collection tours --jsonArray --file /docker-entrypoint-initdb.d/tours.json
+
+use learning_mongo
+show collections
+db.tours.count()
+db.tours.find({"tourTags":"hiking"})
+
+ch3
+
+db.tours.find({"tourTags":"wine"})
+db.tours.insert({
+  "tourName":"The Wines of Santa Cruz",
+  "tourLength":3,
+  "tourDescription":"Discover Santa Cruz's wineries",
+  "tourPrice":500,
+  "tourTags":["wine", "Santa Cruz"]
+})
+db.tours.find({"tourTags":"wine"})
+
+db.tours.update({"tourName":"The Wines of Santa Cruz"},
+    {$set:{"tourRegion":"Central Coast"}})
+db.tours.find({"tourTags":"Santa Cruz"})
+
+db.tours.update({"tourName":"The Wines of Santa Cruz"},
+    {
+      $addToSet: {"tourTags":"boardwalk"}})
+db.tours.find({"tourName":"The Wines of Santa Cruz"})
+
+db.tours.remove({"tourName":"The Wines of Santa Cruz"})
+db.tours.drop()
+
+
+
+ch4
+
+docker exec -it docker_mongodb_container_1 bash
+mongoimport --db learning_mongo --collection tours --jsonArray --file /docker-entrypoint-initdb.d/tours.json
+
+use learning_mongo
+db.tours.find({"tourPackage":"Taste of California"}).explain("executionStats")
+
+db.tours.createIndex({tourPackage:1})
+
+db.tours.find(
+  {"tourPrice":{$lte:500},
+  "tourLength":{$lte:3}})
+
+db.tours.find(
+  {"tourPrice":{$lte:500},
+  "tourLength":{$lte:3}}).explain("executionStats")
+
+db.tours.createIndex({tourPrice:1, tourLength:1})
+
+db.tours.find(
+  {"tourPrice":{$lte:500},
+  "tourLength":{$lte:3}}).explain("executionStats")
+
+=======================================================================================
+
+Unit 3
+ch 2
+
+http://cx-docker:8080/api/tours
+http://cx-docker:8080/api/tours?tourPackage=Backpack%20Cal
+http://cx-docker:8080/api/tours/Big%20Sur%20Retreat
+
+
+ch 3
+http POST http://localhost:8080/api/tours tourName="Kirsten's Fabulous Tour" tourPackage="Fun in the sun" tourPrice=10000 tourLength=5
+http "http://localhost:8080/api/tours/Kirsten's Fabulous Tour" 
+
+
+http PUT "http://localhost:8080/api/tours/Kirsten's Fabulous Tour" tourBlurb="Get your tan on"
+
+http PUT "http://localhost:8080/api/tours/Kirsten's Fabulous Tour" tourBlurb="Get your tan on" replace==true
+
+http DELETE "http://localhost:8080/api/tours/Kirsten's Fabulous Tour"
+http "http://localhost:8080/api/tours/Kirsten's Fabulous Tour" 
+
+=======================================================================================
+
+Unit 4
+ch 1
+
+use learning_mongo
+show collections
+
+db.tours.remove({})
+db.tours.createIndex({"tourName":1},{unique:true})
+
+
+ch 2
+mongoimport --db learning_mongo --collection tours --jsonArray --file /docker-entrypoint-initdb.d/tours.json
+use learning_mongo
+db.tours.find()
+
+db.tours.find({}, {tourName:1})
+db.tours.find({}, {tourName:1, _id:0})
+db.tours.find({}, {tourName:1, tourPrice:1, tourLength:1, _id:0})
+db.tours.find({}, {tourName:1, tourPrice:1, tourLength:1, _id:0}).pretty()
+db.tours.find({}, {tourName:1, tourPrice:1, tourLength:1, _id:0}).pretty().sort({tourPrice:-1})
+db.tours.find({}, {tourName:1, tourPrice:1, tourLength:1, _id:0}).pretty().sort({tourPrice:-1}).limit(1)
+db.tours.find({}, {tourName:1, tourPrice:1, tourLength:1, _id:0}).pretty().sort({tourPrice:-1}).limit(1).skip(20)
+
+db.tours.find({"tourTags":"boating"}).pretty()
+db.tours.find({tourPrice:{$lte:1000,$gte:800}}).pretty()
+
+
+ch 3
+use learning_mongo
+db.tours.createIndex({tourDescription:"text",tourBlurb:"text"})
+
+db.tours.find({$text:{$search:"wine"}}).pretty()
+db.tours.find({$text:{$search:"wine"}}, {score:{$meta:"textScore"}}).pretty()
+db.tours.find({$text:{$search:"wine"}}, {score:{$meta:"textScore"}}).pretty().sort({score:{$meta:"textScore"}})
+db.tours.find({$text:{$search:"wine"}}, {score:{$meta:"textScore"}, tourName:1,_id:0}).pretty().sort({score:{$meta:"textScore"}})
+
+db.tours.find({tourDescription:{$regex:/backpack/}}).pretty()
+db.tours.find({tourDescription:{$regex:/backpack/}},{tourName:1}).pretty()
+db.tours.find({tourDescription:{$regex:/backpack/}},{tourName:1,_id:0}).pretty()
+db.tours.find({tourDescription:{$regex:/backpack/i}},{tourName:1,_id:0}).pretty()
+db.tours.find({tourDescription:/backpack/i},{tourName:1,_id:0}).pretty()
+
+
+ch 4
+
+docker exec -it docker_mongodb_container_1 bash
+mongoimport --db learning_mongo --collection people --jsonArray --file /docker-entrypoint-initdb.d/people.json
+mongoimport --db learning_mongo --collection movies --jsonArray --file /docker-entrypoint-initdb.d/movies.json
+
+use learning_mongo
+
+db.people.findOne({_id:"Brad Pitt"})
+db.movies.findOne({_id:"Fight Club"})
+
+db.people.find({movies:"The Avengers"})
+
+var moviename="The Avengers"
+var movieobj=db.movies.findOne({_id:moviename})
+movieobj.cast = []
+var personArray = db.people.find({movies:moviename})
+personArray.forEach(function(person) {
+  movieobj.cast.push(person)
+})
+movieobj
+
+
+ch 5
+mongoimport --db learning_mongo --collection tours --jsonArray --file /docker-entrypoint-initdb.d/tours.json
+
+db.tours.count({tourPackage:"Cycle California"})
+db.tours.aggregate([{$group: {_id: '$tourPackage', count: {$sum: 1}}}])
+db.tours.aggregate([{$group: {_id: '$tourOrganizer.organizerName', count: {$sum: 1}}}])
+db.tours.aggregate([{$group: {_id: '$tourPackage', average: {$avg: '$tourPrice'}, count: {$sum: 1}}}])
+
+db.tours.aggregate([{$group: {_id: '$tourPackage', average: {$avg: '$tourPrice'}, count: {$sum: 1}}}, {$out: 'prices'}])
+db.prices.find()
+
+
+
+
+
+
