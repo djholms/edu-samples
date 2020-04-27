@@ -1,0 +1,17 @@
+Samples from course Deploying Node by Juriy Bura (https://www.youtube.com/playlist?list=PLQlWzK5tU-gDyxC1JTpyC2avvJlt3hrIh)
+
+### Install environment
+
+yum -y groupinstall "Development Tools"
+yum -y install net-tools
+
+curl -sL https://rpm.nodesource.com/setup_14.x | sudo bash -
+sudo yum install -y nodejs
+node -v
+
+sudo npm install -q pm2 http-server
+sudo npm install -g yarn
+yarn --version
+
+
+
