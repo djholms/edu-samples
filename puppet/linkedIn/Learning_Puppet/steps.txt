@@ -1,0 +1,142 @@
+Unit 2: Install
+
+
+rpm -Uvh https://yum.puppet.com/puppet6-release-el-7.noarch.rpm
+yum install -y puppetserver vim git mc curl
+[root@master ~]# vi /etc/sysconfig/puppetserver 
+JAVA_ARGS="-Xms512m -Xmx512m -Djruby.logger.class=com.puppetlabs.jruby_utils.jruby.Slf4jLogger"
+
+[root@master ~]# vi /etc/puppetlabs/puppet/puppet.conf 
+[agent]
+server = master.puppet.vm
+
+[root@master ~]# vi .bash_profile 
+PATH=$PATH:/opt/puppetlabs/puppet/bin
+PATH=$PATH:$HOME/bin
+
+[root@master ~]# gem install r10k
+[root@master ~]# mkdir /etc/puppetlabs/r10k
+
+
+[root@master ~]# vi /etc/puppetlabs/r10k/r10k.yaml
+
+---
+:cachedir: '/var/cache/r10k'
+
+:sources:
+        :my-org:
+                remote: 'https://github.com/djholms/puppet_control_repo'
+                basedir: '/etc/puppetlabs/code/environments'
+                                                                                                      
+ 
+[root@master ~]# r10k deploy environment -p
+[root@master ~]# cd /etc/puppetlabs/code/environments/
+
+
+Unit 3: First steps
+
+r10k deploy environment -p
+puppet agent -t
+
+Unit 4 Managing nodes
+
+docker ps 
+[root@master ~]# docker exec -it web.puppet.vm bash
+[root@web /]# puppet agent -t
+exit
+
+[root@master ~]# puppetserver ca list
+[root@master ~]# puppetserver ca sign --certname web.puppet.vm
+
+[root@master ~]# docker exec -it web.puppet.vm bash
+[root@web /]# puppet agent -t
+exit
+
+[root@master ~]# docker exec -it db.puppet.vm bash
+puppet agent -t
+exit
+puppetserver ca list
+puppetserver ca sign --certname db.puppet.vm
+
+docker exec -it db.puppet.vm bash
+puppet agent -t
+
+[root@master ~]# facter timezone
+[root@master ~]# facter fqdn
+
+=================================================
+Challenge
+ssh-keygen
+[root@master ~]# cat .ssh/id_rsa.pub 
+copy hash
+
+[root@master ~]# docker exec -it web.puppet.vm bash
+facter ipaddress
+172.18.0.2
+
+[root@master ~]# docker exec -it db.puppet.vm bash
+facter ipaddress
+172.18.0.3
+
+
+r10k deploy environment -p
+puppet agent -t
+
+docker exec -it web.puppet.vm bash
+puppet agent -t
+
+docker exec -it db.puppet.vm bash
+puppet agent -t
+
+
+=================================================
+unit 5
+
+r10k deploy environment -p
+puppet agent -t
+
+docker exec -it minetest.puppet.vm bash
+
+[root@minetest /]# mkdir /opt/minecraft
+[root@minetest /]# cd /opt/minecraft
+
+https://www.minecraft.net/ru-ru/download/server/
+wget https://launcher.mojang.com/v1/objects/bb2b6b1aefcd70dfd1892149ac3a215f6c636b07/server.jar
+
+yum install java
+java -Xmx512M -Xms32M -jar server.jar nogui
+
+[root@minetest minecraft]# vi eula.txt 
+eula=true
+java -Xmx512M -Xms32M -jar server.jar nogui
+
+
+[root@minetest minecraft]# vim /etc/systemd/system/minecraft.service
+[Unit]
+Description=Minecraft Server
+
+Wants=network.target
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/minecraft
+ExecStart=/usr/bin/java -Xmx512M -Xms32M -jar server.jar nogui
+
+[Install]
+WantedBy=multi-user.target
+
+
+[root@minetest minecraft]# systemctl start minecraft
+[root@minetest minecraft]# systemctl status minecraft
+[root@minetest minecraft]# systemctl stop minecraft
+
+
+docker kill minetest.puppet.vm 
+
+r10k deploy environment -p
+puppet agent -t
+
+docker exec -it minetest.puppet.vm puppet agent -t
+
+puppetserver ca list
+puppetserver ca sign --all
