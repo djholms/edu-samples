@@ -1,0 +1,21 @@
+curl -XPUT 127.0.0.1:9200/movies/_doc/179325?pretty -d '
+{"genre":["Action","Adventure"],
+"title":"The Stronghold",
+"year":2017 }'
+
+
+
+curl -XGET 127.0.0.1:9200/movies/_doc/179325?pretty
+
+
+curl -XPOST 127.0.0.1:9200/movies/_doc/179325/_update -d '
+{
+  "doc": {
+  "genre":["Action","Adventure","Fantasy"]
+} }'
+
+
+curl -XGET 127.0.0.1:9200/movies/_search?q=stronghold
+
+
+curl -XDELETE 127.0.0.1:9200/movies/_doc/179325

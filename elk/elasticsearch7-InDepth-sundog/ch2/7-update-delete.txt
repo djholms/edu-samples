@@ -1,0 +1,16 @@
+Update
+
+curl -XPUT 127.0.0.1:9200/movies/_doc/109487?pretty -d '
+{
+  "genres": ["IMAX"],
+  "title": "Interstellar foo",
+  "year":2014
+} '
+
+
+
+[holms@hx-elk-01 bin]$ curl -XGET 127.0.0.1:9200/movies/_doc/109487?pretty
+
+
+ curl -XGET 127.0.0.1:9200/movies/_search?q=Dark
+[holms@hx-elk-01 bin]$ curl -XDELETE 127.0.0.1:9200/movies/_doc/58559

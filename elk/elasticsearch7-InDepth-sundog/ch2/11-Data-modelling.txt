@@ -1,0 +1,45 @@
+curl -XPUT 127.0.0.1:9200/series/ -d '
+{
+"mappings": {
+"properties": {
+"film_to_franchise": {
+"type": "join",
+"relations": {"franchise": "film"}
+}
+}
+}
+}'
+
+wget http://media.sundog-soft.com/es7/series.json
+
+curl -XPUT 127.0.0.1:9200/_bulk?pretty --data-binary @series.json
+
+
+
+curl -XGET 127.0.0.1:9200/series/_search?pretty -d '
+{
+"query": {
+"has_parent": {"parent_type": "franchise",
+"query": {
+"match": {
+"title": "Star Wars"
+}
+}
+}
+}
+}'
+
+
+curl -XGET 127.0.0.1:9200/series/_search?pretty -d '
+{
+"query": {
+"has_child": {
+"type": "film",
+"query": {
+"match": {
+"title": "The Force Awakens"
+}
+}
+}
+}
+}'

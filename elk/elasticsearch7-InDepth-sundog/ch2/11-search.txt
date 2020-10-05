@@ -1,0 +1,40 @@
+curl -XGET 127.0.0.1:9200/movies/_search?pretty -d '
+
+[holms@hx-elk-01 bin]$ curl -XGET 127.0.0.1:9200/movies/_search?pretty -d '
+{
+"query": {
+"match": {
+"title": "Star Treck" }}}'
+
+[holms@hx-elk-01 bin]$ curl -XGET 127.0.0.1:9200/movies/_search?pretty -d '
+{
+"query": {
+"match_phrase": {
+"genre": "sci"
+}}}'
+
+curl -XDELETE 127.0.0.1:9200/movies/
+
+
+curl -XPUT 127.0.0.1:9200/movies/ -d '
+{
+"mappings": {
+"properties": {
+"id": {"type": "integer"},
+"year": {"type": "date"},
+"genre": {"type": "keyword"},
+"title": {"type": "text", "analyzer": "english"}
+}
+}
+}'
+
+
+curl -XPUT 127.0.0.1:9200/_bulk?pretty --data-binary @movies.json
+
+
+curl -XGET 127.0.0.1:9200/movies/_search?pretty -d '
+{
+"query": {
+"match_phrase": {
+"genre": "sci-fi"
+}}}'
