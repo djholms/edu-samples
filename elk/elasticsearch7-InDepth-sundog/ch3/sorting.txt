@@ -1,0 +1,52 @@
+curl -XGET "127.0.0.1:9200/movies/_search?sort=year&pretty"
+
+
+
+
+curl -XDELETE 127.0.0.1:9200/movies/
+
+
+curl -XPUT 127.0.0.1:9200/movies/ -d '
+{
+"mappings": {
+"properties": {
+"title": {
+"type": "text",
+"fields": {
+"raw": {"type":"keyword"}
+}
+}
+}
+}
+}'
+
+curl -XPUT 127.0.0.1:9200/_bulk?pretty --data-binary @movies.json
+
+curl -XGET "127.0.0.1:9200/movies/_search?sort=title.raw&pretty"
+
+
+
+
+curl -XGET 127.0.0.1:9200/movies/_search?pretty -d '
+{
+"query": {
+  "bool": {
+    "must": {"match": {"genre": "Sci-Fi"}},
+    "must_not": {"match": {"title": "trek"}},
+    "filter": {"range": {"year": {"gte": 2010, "lt": 2015}}}
+}
+}
+}'
+
+
+
+
+curl -XGET '127.0.0.1:9200/movies/_search?sort=title.raw&pretty' -d '
+{
+"query": {
+  "bool": {
+    "must": {"match": {"genre": "Sci-Fi"}},
+    "filter": {"range": {"year": {"lt": 1960}}}
+}
+}
+}'

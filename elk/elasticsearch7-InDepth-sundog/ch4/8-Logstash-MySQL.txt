@@ -1,0 +1,58 @@
+sudo apt install mysql-server
+
+cd ~/elk
+wget http://files.grouplens.org/datasets/movielens/ml-100k.zip
+
+cd cd /home/holms/elk/
+mysql -u'root' -p'P@$$w0rd'
+
+
+apt install ruby
+git clone https://github.com/ankane/movielens.sql.git
+cd movielens.sql
+
+ruby generate.rb ml-100k > movielens.sql
+
+mysqladmin create movielens
+mysql -u root movielens < movielens.sql
+
+
+select * from movies WHERE title LIKE 'Star%';
+
+wget https://dev.mysql.com/get/Downloads/Connector-J/mysql-connector-java-8.0.21.zip
+unzip mysql-connector-java-8.0.21.zip
+
+sudo vi /etc/logstash/conf.d/mysql.conf
+
+input {
+    jdbc {
+          jdbc_connection_string => "jdbc:mysql://localhost:3306/movielens"
+          jdbc_user => "student"
+          jdbc_password => "P@$$w0rd"
+          jdbc_driver_library => "/home/holms/elk/mysql-connector-java-8.0.21/mysql-connector-java-8.0.21.jar"
+          jdbc_driver_class => "com.mysql.jdbc.Driver"
+          statement => "SELECT * FROM movies"
+    }
+}
+
+output {
+    stdout { codec => json_lines}
+    elasticsearch {
+        hosts => ["localhost:9200"]
+        index => "movielens-sql"
+    }
+}
+
+
+CREATE USER 'student'@'localhost' IDENTIFIED BY 'P@$$w0rd';
+GRANT ALL  PRIVILEGES ON *.* TO 'student'@'localhost';
+FLUSH PRIVILEGES;
+
+cd /usr/share/logstash
+sudo bin/logstash -f /etc/logstash/conf.d/mysql.conf
+
+mysql -u'student' -p'P@$$w0rd' -e'SELECT * FROM movielens.movies limit 10'
+
+
+curl -XGET 127.0.0.1:9200/_cat/indices?v
+curl -XGET '127.0.0.1:9200/movielens-sql/_search?q=title:Star&pretty'

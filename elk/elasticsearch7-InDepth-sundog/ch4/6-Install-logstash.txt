@@ -1,0 +1,44 @@
+wget media.sundog-soft.com/es/access_log
+
+sudo apt update
+sudo apt install openjdk-8-jre-headless
+sudo apt install logstash
+
+sudo vi /etc/logstash/conf.d/logstash.conf
+
+input {
+        file {
+                path => "/home/holms/elk/access_log"
+                start_position => "beginning"
+        }
+}
+filter {
+        grok {
+                match => {"message" => "%{COMBINEDAPACHELOG}"}
+        }
+        date {
+                match => ["timestamp", "dd/MMM/yyyy:HH:mm:ss Z"]
+        }
+}
+
+output {
+        elasticsearch {
+                hosts => ["localhost:9200"]
+        }
+        stdout {
+                codec => rubydebug
+        }
+}
+
+
+
+cd /usr/share/logstash/
+sudo bin/logstash -f /etc/logstash/conf.d/logstash.conf
+
+
+
+
+
+curl -XGET 127.0.0.1:9200/_cat/indices?v
+
+curl -XGET '127.0.0.1:9200/logstash-2020.10.13-000001/_search?pretty'

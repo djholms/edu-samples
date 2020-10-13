@@ -1,0 +1,49 @@
+curl -XGET "127.0.0.1:9200/movies/_search?q=title:star&pretty"
+
+curl -XGET "127.0.0.1:9200/movies/_search?q=+year:>2010+title:trek&pretty"
+
+
+Request body search
+curl -XGET 127.0.0.1:9200/movies/_search?pretty -d '
+{
+  "query": {
+    "match": {
+      "title": "star"
+    }
+  }
+}'
+
+
+curl -XGET 127.0.0.1:9200/movies/_search?pretty -d '
+{
+  "query": {
+    "bool": {
+      "must": {"match": {"title":"trek"}},
+      "filter": {"range": {"year": {"gte": 2010}}}
+    }
+  }
+}'
+
+
+
+
+Phrase Matching
+
+
+curl -XGET 127.0.0.1:9200/movies/_search?pretty -d '
+{
+  "query": {
+    "match": {
+      "title": "star wars"
+    }
+  }
+}'
+
+curl -XGET 127.0.0.1:9200/movies/_search?pretty -d '
+{
+  "query": {
+    "match_phrase": {
+      "title": {"query": "star beyond", "slop": 1}
+    }
+  }
+}'

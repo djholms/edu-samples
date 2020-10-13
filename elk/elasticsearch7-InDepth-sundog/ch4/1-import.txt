@@ -1,0 +1,13 @@
+wget http://files.grouplens.org/datasets/movielens/ml-latest-small.zip
+
+wget media.sundog-soft.com/es7/MoviesToJson.py
+
+python3 MoviesToJson.py > moremovies.json
+
+curl -XDELETE 127.0.0.1:9200/movies/
+
+curl -XPUT 127.0.0.1:9200/_bulk?pretty --data-binary @moremovies.json
+
+
+
+curl -XGET "127.0.0.1:9200/movies/_search?q=mary%20poppins&pretty"
