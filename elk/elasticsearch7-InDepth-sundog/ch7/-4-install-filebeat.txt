@@ -1,0 +1,44 @@
+apt install filebeat
+
+
+
+wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee -a /etc/apt/sources.list.d/elastic-7.x.list
+sudo apt-get update && sudo apt-get install filebeat
+
+
+cd /etc/filebeat/modules.d/
+sudo mv apache.yml.disabled apache.yml
+
+sudo vi apache.yml
+# Module: apache
+# Docs: https://www.elastic.co/guide/en/beats/filebeat/7.9/filebeat-module-apache.html
+
+- module: apache
+  # Access logs
+  access:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    var.paths:["/home/holms/elk/logs/access*"]
+
+  # Error logs
+  error:
+    enabled: true
+
+    # Set custom paths for the log files. If left empty,
+    # Filebeat will choose the paths depending on your OS.
+    #var.paths:
+    var.paths:["/home/holms/elk/logs/error*"]
+#
+
+sudo systemctl enable filebeat.service --now
+
+
+curl -XGET 127.0.0.1:9200/_cat/indices?v
+
+
+cd /usr/share/filebeat/bin/
+sudo filebeat setup --dashboards
+systemctl restart kibana

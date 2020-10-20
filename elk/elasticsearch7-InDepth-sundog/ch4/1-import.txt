@@ -11,3 +11,15 @@ curl -XPUT 127.0.0.1:9200/_bulk?pretty --data-binary @moremovies.json
 
 
 curl -XGET "127.0.0.1:9200/movies/_search?q=mary%20poppins&pretty"
+
+
+sudo apt install npm
+npm install any-json -g
+sudo apt  install jq
+
+
+
+wget http://media.sundog-soft.com/es/IndexRatings.py
+wget http://media.sundog-soft.com/es/IndexTags.py
+python3 IndexRatings.py
+python3 IndexTags.py
